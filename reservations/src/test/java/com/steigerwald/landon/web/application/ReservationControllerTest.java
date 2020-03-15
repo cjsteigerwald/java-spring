@@ -42,16 +42,16 @@ public class ReservationControllerTest {
         mockRoomReservation.setLastName("Test");
         mockRoomReservation.setFirstName("JUnit");
         mockRoomReservation.setDate(date);
-        mockRoomReservation.setGuestID(1);
+        mockRoomReservation.setGuestId(1);
         mockRoomReservation.setRoomNumber("J1");
         mockRoomReservation.setRoomId(100);
         mockRoomReservation.setRoomName("JUnit Room");
         mockReservationList.add(mockRoomReservation);
 
-        given(reservationService.getRoomReservationsForDate(date)).willReturn(mockReservationList);
+        given(reservationService.getRoomReservationsForDate("2017-01-01")).willReturn(mockReservationList);
         this.mockMvc.perform(get("/reservations?date=2017-01-01")).andExpect(status().isOk()).andExpect(
                 content().string(containsString("Test, JUnit")));
-        
+
 
     }
 }

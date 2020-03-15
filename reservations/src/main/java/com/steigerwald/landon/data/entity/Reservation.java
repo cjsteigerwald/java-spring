@@ -39,7 +39,7 @@ public class Reservation {
         this.roomId = roomId;
     }
 
-    public long getGuestId() {
+    public Long getGuestId() {
         return guestId;
     }
 

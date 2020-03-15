@@ -1,22 +1,27 @@
 package com.steigerwald.landon.business.service;
 
 import com.steigerwald.landon.business.domain.RoomReservation;
+import com.steigerwald.landon.data.entity.Guest;
+import com.steigerwald.landon.data.entity.Reservation;
+import com.steigerwald.landon.data.entity.Room;
 import com.steigerwald.landon.data.repository.GuestRepository;
 import com.steigerwald.landon.data.repository.ReservationRepository;
 import com.steigerwald.landon.data.repository.RoomRepository;
-import com.steigerwald.landon.data.entity.Room;
-import com.steigerwald.landon.data.entity.Guest;
-import com.steigerwald.landon.data.entity.Reservation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
 public class ReservationService {
-    private final RoomRepository roomRepository;
-    private final GuestRepository guestRepository;
-    private final ReservationRepository reservationRepository;
+    private RoomRepository roomRepository;
+    private GuestRepository guestRepository;
+    private ReservationRepository reservationRepository;
+
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     @Autowired
     public ReservationService(RoomRepository roomRepository, GuestRepository guestRepository, ReservationRepository reservationRepository) {
@@ -25,7 +30,8 @@ public class ReservationService {
         this.reservationRepository = reservationRepository;
     }
 
-    public List<RoomReservation> getRoomReservationsForDate(Date date){
+    public List<RoomReservation> getRoomReservationsForDate(String dateString){
+        Date date = this.createDateFromDateString(dateString);
         Iterable<Room> rooms = this.roomRepository.findAll();
         Map<Long, RoomReservation> roomReservationMap = new HashMap<>();
         rooms.forEach(room->{
@@ -36,17 +42,15 @@ public class ReservationService {
             roomReservationMap.put(room.getId(), roomReservation);
         });
         Iterable<Reservation> reservations = this.reservationRepository.findByDate(new java.sql.Date(date.getTime()));
-        if (null != reservations){
+        if(null!=reservations){
             reservations.forEach(reservation -> {
-                Optional<Guest> guestResponse = this.guestRepository.findById(reservation.getGuestId());
-                // isPresent() is null or not
-                if(guestResponse.isPresent()){
-                    Guest guest = guestResponse.get();
+                Optional<Guest> guest = this.guestRepository.findById(reservation.getGuestId());
+                if(null!=guest){
                     RoomReservation roomReservation = roomReservationMap.get(reservation.getId());
                     roomReservation.setDate(date);
                     roomReservation.setFirstName(guest.getFirstName());
                     roomReservation.setLastName(guest.getLastName());
-                    roomReservation.setGuestID(guest.getId());
+                    roomReservation.setGuestId(guest.getId());
                 }
             });
         }
@@ -55,5 +59,19 @@ public class ReservationService {
             roomReservations.add(roomReservationMap.get(roomId));
         }
         return roomReservations;
+    }
+
+    private Date createDateFromDateString(String dateString){
+        Date date = null;
+        if(null!=dateString) {
+            try {
+                date = DATE_FORMAT.parse(dateString);
+            }catch(ParseException pe){
+                date = new Date();
+            }
+        }else{
+            date = new Date();
+        }
+        return date;
     }
 }
